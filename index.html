@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f8f6f0" />
+  <meta name="description" content="Gateboard — a tiny logic puzzle prototype. Arrange three tiles to make all four paths work." />
+  <title>Gateboard · Level 01 Playtest</title>
+  <style>
+    :root { color-scheme: light; --bg:#f8f6f0; --paper:#fffefa; --ink:#252b35; --soft:#697482; --line:#e2e4df; --deep:#293e54; --amber:#e9ac58; --mint:#267968; --mintbg:#e8f4ec; --mist:#eef1f3; --alert:#9b6734; --red:#a54b42; --shadow:0 16px 48px rgba(39,50,54,.065); }
+    * {box-sizing:border-box}
+    html {scroll-behavior:smooth}
+    body {margin:0; background:var(--bg); color:var(--ink); font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; line-height:1.5;}
+    button,select,textarea {font:inherit}
+    button {cursor:pointer}
+    button:focus-visible,textarea:focus-visible,select:focus-visible {outline:3px solid #7eacba;outline-offset:3px}
+    .shell {max-width:1120px; margin:0 auto; padding:28px 25px 80px}
+    .top {display:flex;justify-content:space-between;align-items:center;gap:14px;padding-bottom:23px;border-bottom:1px solid var(--line)}
+    .brand {display:flex;align-items:center;gap:11px;font-size:17px;font-weight:850;letter-spacing:-.75px}
+    .brandmark {width:35px;height:35px;background:var(--deep);color:#fff;border-radius:10px;display:grid;place-items:center;transform:rotate(-5deg);font-weight:900;font-size:21px;line-height:1}
+    .pill {font-size:11px;font-weight:750;letter-spacing:1.05px;text-transform:uppercase;padding:8px 11px;border:1px solid var(--line);border-radius:100px;color:var(--soft);background:var(--paper)}
+    .hero {padding:46px 0 30px;max-width:760px}
+    .eyebrow {display:inline-flex;align-items:center;gap:8px;color:var(--mint);font-size:12px;font-weight:850;letter-spacing:1.65px;text-transform:uppercase}
+    .eyebrow:before {content:"";height:7px;width:7px;border-radius:50%;background:var(--mint)}
+    h1 {font-size:clamp(33px,4.7vw,59px);line-height:1.08;margin:13px 0 15px;letter-spacing:-2.7px;font-weight:850}
+    .intro {font-size:17px;color:var(--soft);line-height:1.7;max-width:600px;margin:0}
+    .layout {display:grid;grid-template-columns:minmax(0,1.5fr) minmax(265px,.84fr);gap:25px;align-items:start}
+    .card {background:var(--paper);border:1px solid #e9e7e0;border-radius:21px;box-shadow:var(--shadow)}
+    .game {padding:24px 26px 26px;min-width:0}
+    .sectiontop {display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+    .overline {text-transform:uppercase;font-size:11px;font-weight:800;letter-spacing:1.35px;color:var(--soft)}
+    h2 {font-size:23px;letter-spacing:-.7px;line-height:1.15;margin:6px 0 0}
+    .count {background:#f0f5f2;color:var(--mint);font-size:12px;font-weight:800;border-radius:100px;padding:8px 12px;font-variant-numeric:tabular-nums}
+    .gamehint {font-size:14px;color:var(--soft);margin:16px 0 21px}
+    .boardwrap {background:#f5f5f1;border:1px solid #edede7;border-radius:16px;padding:25px 8px 20px;display:flex;justify-content:center;overflow:hidden}
+    .board {display:grid;grid-template-columns:60px repeat(2, minmax(80px,103px)) 88px;grid-template-rows:49px repeat(2,94px) 61px;gap:10px;align-items:stretch;justify-content:center;width:100%;max-width:445px}
+    .source,.destination {display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1.18;text-align:center;border-radius:11px;min-width:0;}
+    .source {font-size:19px;font-weight:830;color:var(--deep)}
+    .source small {font-size:10px;text-transform:uppercase;color:var(--soft);font-weight:800;letter-spacing:.7px;margin-bottom:3px}
+    .destination {background:var(--paper);border:1px solid var(--line);padding:6px 2px;gap:3px;font-size:11px;color:var(--soft);}
+    .destination .goal {color:var(--deep);font-weight:900;font-size:21px;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
+    .destination .actual {font-size:10px;font-weight:850;letter-spacing:.1px}
+    .destination.correct {background:var(--mintbg);border-color:#9fcdb3;color:var(--mint)}
+    .destination.correct .goal, .destination.correct .actual {color:var(--mint)}
+    .destination.wrong .actual {color:var(--alert)}
+    .tile {border-radius:14px;border:2px dashed #c8d0d2;color:#86929a;background:#ffffff81;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;min-width:0;min-height:0;transition:transform .12s ease,border-color .12s ease,background .12s ease}
+    .tile:active,.banktile:active {transform:scale(.97)}
+    .tile .label {font-size:10px;letter-spacing:.7px;font-weight:850;text-transform:uppercase}
+    .tile .operator {font-size:29px;font-weight:850;line-height:1.15;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+    .tile.empty .operator {font-size:26px;font-weight:400;color:#96a1a7}
+    .tile.filled {border:1px solid #d4dce1;background:#fff;box-shadow:0 3px 0 #dee4e5;color:var(--deep)}
+    .tile.selected {background:#fff4dc;border:2px solid var(--amber);box-shadow:0 0 0 3px #ffe9c3;color:#644826}
+    .tile.fixed {background:#e7ecef;border:1px solid #d2dbe0;color:#435567;cursor:default}
+    .tile.fixed .lock {font-size:10px;color:#687681}
+    .racktop {display:flex;align-items:center;justify-content:space-between;margin-top:22px;gap:8px}
+    .racktop strong {font-size:14px}
+    .micro {font-size:12px;color:var(--soft)}
+    .rack {display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0 16px}
+    .banktile {border:1px solid #d7ddd8;border-radius:14px;background:#f7f9f6;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:12px 6px 10px;min-height:93px;gap:2px;color:var(--deep);transition:transform .12s ease,border-color .12s ease,background .12s ease}
+    .banktile .operator {font-size:30px;line-height:1.2;font-weight:850;letter-spacing:-.9px}
+    .banktile .label {font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:850;color:var(--soft)}
+    .banktile .state {font-size:11px;color:var(--soft)}
+    .banktile.selected {background:#fff4dc;border:2px solid var(--amber);padding:11px 5px 9px}
+    .banktile.placed:not(.selected) {background:#f2f3f1;color:#53616b}
+    .helptext {min-height:24px;font-size:12px;color:var(--soft);margin:0 0 15px}
+    .actions {display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+    .action {border:1px solid var(--line);border-radius:11px;background:var(--paper);padding:11px 15px;font-size:13px;font-weight:800;color:var(--deep);}
+    .action:hover {border-color:#9bb0b4;background:#fafcfb}
+    .action.primary {background:var(--deep);color:#fff;border-color:var(--deep)}
+    .action.primary:hover {background:#1a2f44}
+    .action:disabled {cursor:default;opacity:.5}
+    .hintbox,.successbox {padding:16px 17px;border-radius:13px;margin:16px 0;background:#fbf2df;border:1px solid #ebd9b9;color:#685333;font-size:13px}
+    .hintbox strong,.successbox strong {display:block;margin-bottom:5px;font-size:14px}
+    .successbox {background:#e7f5ed;border-color:#b6d9c4;color:#1e644c}
+    .sidebar {padding:27px 25px}
+    .sideheading {font-weight:850;font-size:17px;letter-spacing:-.4px;margin:0 0 18px}
+    .steps {display:flex;flex-direction:column;gap:21px}
+    .step {display:flex;gap:13px}
+    .stepn {width:29px;height:29px;flex:none;border-radius:9px;background:#eef1f2;color:var(--deep);display:grid;place-items:center;font-size:12px;font-weight:850}
+    .step strong {font-size:14px;display:block;margin:1px 0 3px}
+    .step p {margin:0;color:var(--soft);font-size:13px;line-height:1.6}
+    .example {margin:21px 0 0;border:1px solid #e8e9e6;border-radius:12px;background:#f6f7f3;padding:13px 15px;font-weight:850;text-align:center;letter-spacing:.1px;font-variant-numeric:tabular-nums;color:var(--deep)}
+    .side-divider {height:1px;background:var(--line);margin:23px 0}
+    .stats {display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+    .stat {padding:10px 3px;text-align:center;background:#f6f7f4;border-radius:11px}
+    .stat strong {display:block;font-size:19px;color:var(--deep);font-variant-numeric:tabular-nums}
+    .stat span {font-size:10px;color:var(--soft);text-transform:uppercase;letter-spacing:.6px;font-weight:750}
+    .feedbacklink {display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:13px 15px;color:var(--deep);text-align:left;font-weight:800;font-size:13px;width:100%}
+    .feedbacklink:hover {background:#f8faf8;border-color:#a4b5b0}
+    .footer {margin:23px 0 0;text-align:center;font-size:12px;color:var(--soft)}
+    .feedbackscreen {max-width:660px;margin:0 auto}
+    .feedbackcard {padding:30px}
+    .feedbackcard h2 {font-size:30px;margin-bottom:12px}
+    .feedbackcard .lead {color:var(--soft);font-size:14px;margin-bottom:25px}
+    .question {padding:18px 0;border-top:1px solid var(--line)}
+    .question legend,.question label.heading {display:block;font-weight:800;font-size:14px;margin-bottom:11px}
+    .scale {display:flex;gap:7px;flex-wrap:wrap}
+    .rate {position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:43px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--deep);font-weight:800;cursor:pointer}
+    .rate input {position:absolute;opacity:0;width:100%;height:100%;cursor:pointer}
+    .rate:has(input:checked) {background:var(--deep);color:#fff;border-color:var(--deep)}
+    .rate:has(input:focus-visible) {outline:3px solid #7eacba;outline-offset:2px}
+    .legendrow {display:flex;justify-content:space-between;max-width:250px;font-size:11px;color:var(--soft);margin-top:7px}
+    select,textarea {width:100%;border:1px solid #cad1d1;background:#fff;color:var(--ink);border-radius:11px;padding:12px 13px;font-size:14px}
+    textarea {resize:vertical;min-height:100px}
+    .privacy {margin:18px 0;color:var(--soft);font-size:12px;line-height:1.7}
+    .report {margin-top:17px}
+    .report textarea {font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;min-height:210px;white-space:pre}
+    .hidden {display:none!important}
+    [aria-live] {scroll-margin-top:20px}
+    @media(max-width:820px){.layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:1fr 1fr;column-gap:30px}.sideheading,.steps,.example {grid-column:1}.side-divider{display:none}.stats,.feedbacklink{grid-column:2}.stats{align-self:start;margin-top:38px}.feedbacklink{align-self:end}.game{max-width:none}.hero{padding:34px 0 25px}}
+    @media(max-width:575px){.shell{padding:18px 13px 45px}.top{padding-bottom:16px}.hero{padding:29px 5px 22px}h1{font-size:36px;letter-spacing:-1.65px;margin:10px 0}.intro{font-size:14px;line-height:1.65}.game{padding:19px 13px 20px}.gamehint{font-size:13px}.boardwrap{padding:16px 2px 14px}.board{grid-template-columns:42px repeat(2,minmax(65px,1fr)) 69px;grid-template-rows:42px repeat(2,77px) 53px;gap:5px;max-width:370px}.source{font-size:16px}.source small{font-size:8px}.destination{padding:3px 1px;gap:2px;font-size:9px}.destination .goal{font-size:17px}.destination .actual{font-size:9px}.tile{border-radius:10px}.tile .operator{font-size:25px}.tile .label{font-size:9px}.tile.fixed .lock{font-size:9px}.rack{gap:7px}.banktile{min-height:88px}.sidebar{display:block;padding:22px}.stats{margin-top:0}.feedbacklink{margin-top:15px}.feedbackcard{padding:23px 18px}.feedbackcard h2{font-size:25px}.hero .eyebrow{font-size:10px}}
+    @media(max-width:365px){.board{grid-template-columns:37px repeat(2,minmax(59px,1fr)) 61px;gap:4px}.destination .goal{font-size:16px}.game{padding:17px 9px}.boardwrap{padding:10px 1px}.tile .operator{font-size:23px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="top"><div class="brand"><span class="brandmark" aria-hidden="true">G</span><span>GATEBOARD</span></div><span class="pill">Private playtest · 01</span></header>
+  <main id="playScreen">
+    <section class="hero"><div class="eyebrow">A tiny game of big connections</div><h1>Every piece<br />has its place.</h1><p class="intro">Three tiles. Four paths. One arrangement makes everything work. Can you find it?</p></section>
+    <div class="layout">
+      <section class="card game" aria-label="Gateboard puzzle">
+        <div class="sectiontop"><div><div class="overline">Level 01 · First connections</div><h2>Make every path work.</h2></div><span class="count" id="count" aria-live="polite">0 / 4 paths</span></div>
+        <p class="gamehint">Read across <strong>→</strong> and down <strong>↓</strong>. Move the tiles until all four results match their targets.</p>
+        <div class="boardwrap">
+          <div class="board" aria-label="Two by two puzzle board">
+            <div></div><div class="source"><small>Start</small>1 ↓</div><div class="source"><small>Start</small>2 ↓</div><div></div>
+            <div class="source"><small>Start</small>1 →</div><button class="tile empty" type="button" data-cell="0" aria-label="Top left empty position"><span class="operator">+</span><span class="label">Place tile</span></button><button class="tile empty" type="button" data-cell="1" aria-label="Top right empty position"><span class="operator">+</span><span class="label">Place tile</span></button><div class="destination" id="target0" aria-live="polite"><span>GOAL →</span><span class="goal">6</span><span class="actual">Not set</span></div>
+            <div class="source"><small>Start</small>3 →</div><button class="tile empty" type="button" data-cell="2" aria-label="Bottom left empty position"><span class="operator">+</span><span class="label">Place tile</span></button><div class="tile fixed" aria-label="Fixed tile plus one"><span class="label">Fixed tile</span><span class="operator">+1</span><span class="lock">◆ Cannot move</span></div><div class="destination" id="target1" aria-live="polite"><span>GOAL →</span><span class="goal">3</span><span class="actual">Not set</span></div>
+            <div></div><div class="destination" id="target2" aria-live="polite"><span>GOAL ↓</span><span class="goal">2</span><span class="actual">Not set</span></div><div class="destination" id="target3" aria-live="polite"><span>GOAL ↓</span><span class="goal">5</span><span class="actual">Not set</span></div><div></div>
+          </div>
+        </div>
+        <div class="racktop"><strong>Your tiles</strong><span class="micro">Tap a tile, then a space</span></div>
+        <div class="rack" id="rack" aria-label="Movable tiles">
+          <button type="button" class="banktile" data-piece="0" aria-label="Select tile A, plus two"><span class="label">Tile A</span><span class="operator">+2</span><span class="state">Available</span></button>
+          <button type="button" class="banktile" data-piece="1" aria-label="Select tile B, multiply by two"><span class="label">Tile B</span><span class="operator">×2</span><span class="state">Available</span></button>
+          <button type="button" class="banktile" data-piece="2" aria-label="Select tile C, minus one"><span class="label">Tile C</span><span class="operator">−1</span><span class="state">Available</span></button>
+        </div>
+        <p class="helptext" id="helptext" aria-live="polite">Choose any tile to get started.</p>
+        <div class="successbox hidden" id="success" role="status"><strong>✓ You connected them all.</strong> Every row and column reached its target. Nice deduction. Tell us what the puzzle felt like!</div>
+        <div class="hintbox hidden" id="hintbox" aria-live="polite"></div>
+        <div class="actions"><button class="action" id="hintBtn" type="button">✧ Get a hint</button><button class="action" id="resetBtn" type="button">↻ Reset board</button><button class="action primary hidden" id="feedbackAfter" type="button">Give feedback →</button></div>
+      </section>
+      <aside class="card sidebar" aria-label="How to play and statistics"><h2 class="sideheading">How to play</h2><div class="steps">
+          <div class="step"><span class="stepn">1</span><div><strong>Choose a tile</strong><p>Tap one of the three operations below the board.</p></div></div>
+          <div class="step"><span class="stepn">2</span><div><strong>Place or swap it</strong><p>Tap a board space. Tap another tile to reposition or swap pieces.</p></div></div>
+          <div class="step"><span class="stepn">3</span><div><strong>Match all four goals</strong><p>Each row runs left to right and each column runs top to bottom. Order matters!</p></div></div>
+        </div><div class="example">1 → +2 → ×2 = 6</div><div class="side-divider"></div>
+        <div class="stats"><div class="stat"><strong id="movesStat">0</strong><span>Moves</span></div><div class="stat"><strong id="hintsStat">0</strong><span>Hints</span></div><div class="stat"><strong id="timeStat">0:00</strong><span>Time</span></div></div>
+        <button class="feedbacklink" id="feedbackAnytime" type="button"><span>Share playtest feedback<br /><span style="font-weight:400;color:var(--soft);font-size:12px">Even if you haven't finished</span></span><span aria-hidden="true">↗</span></button>
+      </aside>
+    </div>
+    <p class="footer">A playable game-design experiment · No accounts, ads, or analytics.</p>
+  </main>
+  <main id="feedbackScreen" class="feedbackscreen hidden">
+    <section class="hero"><div class="eyebrow">Playtest feedback</div><h1>How did it feel?</h1><p class="intro">There are no wrong answers. We're testing whether the puzzle is intuitive, challenging, and fun.</p></section>
+    <section class="card feedbackcard"><div class="sectiontop"><div class="overline">A 60-second survey</div><button class="action" type="button" id="backBtn">← Back to game</button></div>
+      <form id="feedbackForm">
+        <fieldset class="question" style="border-left:0;border-right:0;border-bottom:0;padding-left:0;padding-right:0"><legend>How clear were the instructions?</legend><div class="scale" id="clarityRate"></div><div class="legendrow"><span>1 · Confusing</span><span>5 · Very clear</span></div></fieldset>
+        <fieldset class="question" style="border-left:0;border-right:0;border-bottom:0;padding-left:0;padding-right:0"><legend>How difficult did it feel?</legend><div class="scale" id="difficultyRate"></div><div class="legendrow"><span>1 · Too easy</span><span>5 · Too hard</span></div></fieldset>
+        <fieldset class="question" style="border-left:0;border-right:0;border-bottom:0;padding-left:0;padding-right:0"><legend>How fun was it?</legend><div class="scale" id="funRate"></div><div class="legendrow"><span>1 · Not fun</span><span>5 · Really fun</span></div></fieldset>
+        <div class="question"><label class="heading" for="approach">How did you approach the puzzle?</label><select id="approach" name="approach"><option value="">Choose one (optional)</option><option>I mostly used logical deductions</option><option>I used a mixture of reasoning and experimentation</option><option>I mostly tried different combinations</option><option>I couldn't work out what to do</option></select></div>
+        <div class="question"><label class="heading" for="notes">What was confusing, satisfying, or missing?</label><textarea id="notes" name="notes" placeholder="Any first impressions? Would you play another level?" maxlength="1500"></textarea></div>
+        <p class="privacy"><strong>Privacy:</strong> This prototype does not send or store feedback on a server. Press the button below to copy a report, then send it to the friend who shared the game. If copying is blocked, a selectable report will appear.</p>
+        <div class="actions"><button class="action primary" type="submit" id="copyBtn">Copy feedback report</button><button class="action" type="button" id="playAgainBtn">Return to puzzle</button></div>
+        <div id="copyStatus" role="status" aria-live="polite" style="font-size:13px;margin-top:12px;color:var(--mint)"></div>
+        <div class="report hidden" id="reportWrap"><label class="heading" for="reportText">Your report (select and copy manually if needed)</label><textarea id="reportText" readonly></textarea></div>
+      </form>
+    </section><p class="footer">Thank you for helping evaluate an early game idea.</p>
+  </main>
+</div>
+<script>
+(() => {
+  'use strict';
+  const tiles = [{id:'A', op:'+2'}, {id:'B', op:'×2'}, {id:'C', op:'−1'}];
+  const targets = [6,3,2,5];
+  let cells = [null,null,null], selected=null, moves=0, hints=0, startTime=null, solvedTime=null;
+  let elapsed=0, solved=false, pausedSince=null, pausedTotal=0;
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => Array.from(document.querySelectorAll(selector));
+  const formatTime = seconds => `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
+  function calc(n, operations) {
+    for (const operation of operations) {
+      if (operation===null) return null;
+      if (operation==='+2') n+=2;
+      else if (operation==='×2') n*=2;
+      else if (operation==='−1') n-=1;
+      else if (operation==='+1') n+=1;
+    }
+    return n;
+  }
+  const op = i => cells[i]===null ? null : tiles[cells[i]].op;
+  const outputs = () => [calc(1,[op(0),op(1)]),calc(3,[op(2),'+1']),calc(1,[op(0),op(2)]),calc(2,[op(1),'+1'])];
+  function trackStart() { if(startTime===null && !solved) startTime=Date.now(); }
+  function updateTime() { if(startTime!==null && !solved) elapsed=Math.max(0,Math.floor(((pausedSince===null?Date.now():pausedSince)-startTime-pausedTotal)/1000)); $('#timeStat').textContent=formatTime(elapsed); }
+  function render() {
+    $$('.tile[data-cell]').forEach(btn=>{
+      const i=Number(btn.dataset.cell), piece=cells[i];
+      btn.classList.toggle('empty',piece===null);
+      btn.classList.toggle('filled',piece!==null);
+      btn.classList.toggle('selected',piece!==null && selected===piece);
+      if(piece===null) {
+        btn.innerHTML='<span class="operator">+</span><span class="label">Place tile</span>';
+        btn.setAttribute('aria-label',`Empty ${['top left','top right','bottom left'][i]} space. ${selected===null?'Select a tile first.':'Place selected tile here.'}`);
+      } else {
+        btn.innerHTML=`<span class="label">Tile ${tiles[piece].id}</span><span class="operator">${tiles[piece].op}</span>`;
+        btn.setAttribute('aria-label',`${['Top left','top right','bottom left'][i]} contains tile ${tiles[piece].id}, ${tiles[piece].op}. ${selected===piece?'Selected.':'Tap to select.'}`);
+      }
+    });
+    $$('.banktile').forEach(btn=>{
+      const i=Number(btn.dataset.piece), placed=cells.includes(i);
+      btn.classList.toggle('selected',selected===i);
+      btn.classList.toggle('placed',placed);
+      btn.querySelector('.state').textContent=selected===i?'Selected':placed?'On board':'Available';
+      btn.setAttribute('aria-pressed',String(selected===i));
+    });
+    const vals=outputs();
+    vals.forEach((value,i)=>{
+      const element=$('#target'+i);
+      element.classList.toggle('correct',value===targets[i]);
+      element.classList.toggle('wrong',value!==null && value!==targets[i]);
+      element.querySelector('.actual').textContent=value===null?'Not set':value===targets[i]?'✓ Matched':`Now ${value}`;
+      element.setAttribute('aria-label',`Target ${targets[i]}, ${value===null?'incomplete':`current value ${value}${value===targets[i]?', matched':''}`}`);
+    });
+    const matched=vals.filter((v,i)=>v===targets[i]).length;
+    $('#count').textContent=`${matched} / 4 paths`;
+    $('#movesStat').textContent=moves;
+    $('#hintsStat').textContent=hints;
+    updateTime();
+    if (!solved && cells.every(i=>i!==null) && matched===4) {
+      solved=true; solvedTime=elapsed;
+      $('#success').classList.remove('hidden');
+      $('#feedbackAfter').classList.remove('hidden');
+      $('#helptext').textContent='Solved! You can share your impressions below.';
+    } else if (!solved) {
+      $('#helptext').textContent=selected===null?'Choose any tile to get started.':'Tile selected — tap a board space to place or swap it.';
+    }
+  }
+  function selectPiece(i) {if(solved)return;selected=selected===i?null:i;render();}
+  function placeAt(cell) {
+    if(solved) return;
+    if(selected===null) {
+      if(cells[cell]!==null) {selected=cells[cell];render();}
+      else $('#helptext').textContent='Tap one of the tiles below the board first.';
+      return;
+    }
+    if(cells[cell]===selected) {selected=null;render();return;}
+    trackStart();
+    const previous=cells.indexOf(selected), displaced=cells[cell];
+    if(previous!==-1) cells[previous]=displaced;
+    cells[cell]=selected;
+    selected=null;
+    moves+=1;
+    render();
+  }
+  function reset() {
+    cells=[null,null,null];selected=null;moves=0;hints=0;startTime=null;solvedTime=null;elapsed=0;solved=false;pausedSince=null;pausedTotal=0;
+    $('#success').classList.add('hidden');$('#feedbackAfter').classList.add('hidden');$('#hintbox').classList.add('hidden');
+    $('#hintBtn').disabled=false;$('#hintBtn').textContent='✧ Get a hint';render();
+  }
+  function hint() {
+    if(solved || hints>=2)return;
+    hints++;
+    $('#hintbox').classList.remove('hidden');
+    if(hints===1) $('#hintbox').innerHTML='<strong>Hint 1 · Start with the bottom row</strong>It starts at 3 and ends at 3. The fixed tile adds 1. What must happen in the empty space just before it?';
+    else {$('#hintbox').innerHTML='<strong>Hint 2 · Work backwards</strong>Since the last tile adds 1, you must reach 2 before it. Which of your tiles changes 3 into 2?';$('#hintBtn').disabled=true;$('#hintBtn').textContent='All hints shown';}
+    render();
+  }
+  function goFeedback(){ if(!solved && startTime!==null && pausedSince===null)pausedSince=Date.now();updateTime();$('#playScreen').classList.add('hidden');$('#feedbackScreen').classList.remove('hidden');window.scrollTo({top:0,behavior:'instant'}); }
+  function goGame(){ if(pausedSince!==null){pausedTotal+=Date.now()-pausedSince;pausedSince=null;}$('#feedbackScreen').classList.add('hidden');$('#playScreen').classList.remove('hidden');window.scrollTo({top:0,behavior:'instant'}); }
+  function makeScale(id,name){
+    const host=$('#'+id);
+    for(let i=1;i<=5;i++){
+      const l=document.createElement('label');l.className='rate';
+      const input=document.createElement('input');input.type='radio';input.name=name;input.value=String(i);input.setAttribute('aria-label',`${i} out of 5`);
+      l.appendChild(input);l.append(String(i));host.appendChild(l);
+    }
+  }
+  function report(){
+    const get=name=>($(`input[name="${name}"]:checked`)||{}).value||'Not answered';
+    const lines=[
+      'GATEBOARD · LEVEL 1 PLAYTEST',
+      '----------------------------',
+      `Solved: ${solved?'Yes':'No'}`,
+      `Paths correct: ${outputs().filter((v,i)=>v===targets[i]).length}/4`,
+      `Moves: ${moves}`,
+      `Hints used: ${hints}`,
+      `Play time: ${formatTime(solvedTime===null?elapsed:solvedTime)} (approx.; timer starts on first move)`,
+      '',
+      `Instruction clarity (1–5): ${get('clarity')}`,
+      `Difficulty (1=too easy, 5=too hard): ${get('difficulty')}`,
+      `Fun (1–5): ${get('fun')}`,
+      `Approach: ${$('#approach').value||'Not answered'}`,
+      `Comments: ${$('#notes').value.trim()||'None'}`
+    ];
+    return lines.join('\n');
+  }
+  async function copy(text){
+    if (navigator.clipboard && window.isSecureContext) {try {await navigator.clipboard.writeText(text);return true;}catch(e){}}
+    const target=$('#reportText');target.focus();target.select();
+    try {return document.execCommand('copy');} catch(e) {return false;}
+  }
+  $$('.banktile').forEach(btn=>btn.addEventListener('click',()=>selectPiece(Number(btn.dataset.piece))));
+  $$('.tile[data-cell]').forEach(btn=>btn.addEventListener('click',()=>placeAt(Number(btn.dataset.cell))));
+  $('#resetBtn').addEventListener('click',reset);
+  $('#hintBtn').addEventListener('click',hint);
+  $('#feedbackAnytime').addEventListener('click',goFeedback);
+  $('#feedbackAfter').addEventListener('click',goFeedback);
+  $('#backBtn').addEventListener('click',goGame);
+  $('#playAgainBtn').addEventListener('click',goGame);
+  ['clarityRate','difficultyRate','funRate'].forEach((id,i)=>makeScale(id,['clarity','difficulty','fun'][i]));
+  $('#feedbackForm').addEventListener('submit',async(event)=>{
+    event.preventDefault();updateTime();const feedback=report();
+    $('#reportText').value=feedback;$('#reportWrap').classList.remove('hidden');
+    const didCopy=await copy(feedback);
+    $('#copyStatus').textContent=didCopy?'Copied! Paste this report into a message to the person who shared the game.':'Automatic copying was blocked. Select the report below and copy it manually.';
+  });
+  setInterval(updateTime,1000);
+  render();
+})();
+</script>
+</body>
+</html>
